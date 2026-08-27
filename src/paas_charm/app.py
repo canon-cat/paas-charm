@@ -501,6 +501,18 @@ class App:  # pylint: disable=too-many-instance-attributes
             env[f"{prefix}PEER_FQDNS"] = self._charm_state.peer_fqdns
 
         env.update(self._generate_integration_environments(prefix=self.integrations_prefix))
+
+        for relation in self._charm_state.custom_relations:
+            if not relation.is_ready():
+                continue
+            for key, value in (relation.gen_environment() or {}).items():
+                if key in env:
+                    logger.warning(
+                        "Custom relation overwrites built-in environment variable %s",
+                        key,
+                    )
+                env[key] = value
+
         return env
 
     def _generate_integration_environments(self, prefix: str = "") -> dict[str, str]:
@@ -531,6 +543,19 @@ class App:  # pylint: disable=too-many-instance-attributes
                 relation_data=self._charm_state.integrations.oauth,
             )
         )
+
+        for relation in self._charm_state.custom_relations:
+            if not relation.is_ready():
+                continue
+            for key, value in (relation.gen_environment() or {}).items():
+                if key in env:
+                    logger.warning(
+                        "Custom relation %s overwrites environment variable %s",
+                        relation.relation_name,
+                        key,
+                    )
+                env[key] = value
+
         return {prefix + k: v for (k, v) in env.items()}
 
     @property

@@ -97,6 +97,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: SecretKeyStorage,
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
+        custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -109,6 +110,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_key: The application secret key manager.
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
+            custom_relations: Custom relations.
             base_url: Base URL for the service.
 
         Return:
@@ -223,7 +225,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
-            custom_relations=list(integration_requirers.custom_relations),
+            custom_relations=custom_relations,
         )
 
     @property
@@ -305,7 +307,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
         openfga: OpenFGA requirer object.
         oauth: PaaSOAuthRequirer object.
         http_proxy: PaaSHttpProxyRequirer object.
-        custom_relations: Tuple of instantiated custom relations.
     """
 
     databases: dict[str, "PaaSDatabaseRequires"]
@@ -317,7 +318,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     smtp: "SmtpRequires | None" = None
     oauth: "PaaSOAuthRequirer | None" = None
     http_proxy: "PaaSHttpProxyRequirer | None" = None
-    custom_relations: tuple["CustomRelation", ...] = ()
 
 
 @dataclass

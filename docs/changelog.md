@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   types and re-export `InvalidRelationDataError`/`RelationDataError` from
   `paas_charm.relations`.
 * docs: Add a how-to and reference for custom relations. The example Flask
-  implementation was updated to showcase `CustomRelation` usage.
+  implementation uses `CustomRelation` to integrate with a Temporal server.
 * feat: Rename the `secret-storage` peer relation (and its interface) to `peers`,
   and store the auto-generated application secret key in a Juju application-owned
   secret instead of the peer relation databag. The peer relation is now used only

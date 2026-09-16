@@ -17,6 +17,7 @@ from paas_charm.exceptions import (
     RelationDataError,
 )
 from paas_charm.peers import Peers
+from paas_charm.relations import CustomRelation
 from paas_charm.secret_key import SecretKeyStorage
 from paas_charm.utils import build_validation_error_message, config_metadata
 
@@ -25,7 +26,6 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from charms.openfga_k8s.v1.openfga import OpenfgaProviderAppData, OpenFGARequires
     from charms.smtp_integrator.v0.smtp import SmtpRelationData, SmtpRequires
     from charms.squid_forward_proxy.v0.http_proxy import ProxyConfig
-    from dpcharmlibs.interfaces import ValkeyResponseModel
 
     from paas_charm.databases import PaaSDatabaseRelationData, PaaSDatabaseRequires
     from paas_charm.http_proxy import PaaSHttpProxyRequirer
@@ -34,7 +34,6 @@ if typing.TYPE_CHECKING:  # pragma: nocover
     from paas_charm.s3 import PaaSS3RelationData, PaaSS3Requirer
     from paas_charm.saml import PaaSSAMLRelationData, PaaSSAMLRequirer
     from paas_charm.tracing import PaaSTracingEndpointRequirer, PaaSTracingRelationData
-    from paas_charm.valkey import ValkeyClientRequirer
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +61,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         peer_fqdns: str | None = None,
         integrations: "IntegrationsState | None" = None,
         base_url: str | None = None,
+        custom_relations: list[CustomRelation] | None = None,
     ):
         """Initialize a new instance of the CharmState class.
 
@@ -74,6 +74,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns: The FQDN of units in the peer relation.
             integrations: Information about the integrations.
             base_url: Base URL for the service.
+            custom_relations: Custom relations.
         """
         self.framework = framework
         self._framework_config = framework_config if framework_config is not None else {}
@@ -83,6 +84,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         self.peer_fqdns = peer_fqdns
         self.integrations = integrations or IntegrationsState()
         self.base_url = base_url
+        self.custom_relations = custom_relations or []
 
     @classmethod
     def from_charm(  # pylint: disable=too-many-arguments,too-many-locals
@@ -95,6 +97,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
         secret_key: SecretKeyStorage,
         peers: Peers,
         integration_requirers: "IntegrationRequirers",
+        custom_relations: list[CustomRelation] | None = None,
         base_url: str | None = None,
     ) -> "CharmState":
         """Initialize a new instance of the CharmState class from the associated charm.
@@ -107,6 +110,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             secret_key: The application secret key manager.
             peers: The peer coordination helper.
             integration_requirers: The collection of integration requirers.
+            custom_relations: Custom relations.
             base_url: Base URL for the service.
 
         Return:
@@ -159,11 +163,6 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                     if integration_requirers.rabbitmq
                     else None
                 ),
-                valkey=(
-                    integration_requirers.valkey.to_relation_data()
-                    if integration_requirers.valkey
-                    else None
-                ),
                 s3=(
                     integration_requirers.s3.to_relation_data()
                     if integration_requirers.s3
@@ -210,6 +209,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
                 f"{exc.relation} relation data is either unavailable, invalid or not usable.",
                 relation=exc.relation,
             ) from exc
+
         peer_fqdns = None
         if peers.is_related and (peer_unit_fqdns := peers.get_peer_unit_fqdns()):
             peer_fqdns = ",".join(peer_unit_fqdns)
@@ -225,6 +225,7 @@ class CharmState:  # pylint: disable=too-many-instance-attributes
             peer_fqdns=peer_fqdns,
             integrations=integrations,
             base_url=base_url,
+            custom_relations=custom_relations,
         )
 
     @property
@@ -299,7 +300,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     Attrs:
         databases: PaaSDatabaseRequires collection.
         rabbitmq: RabbitMQ requirer object.
-        valkey: Valkey requirer object.
         s3: S3 requirer object.
         saml: Saml requirer object.
         tracing: TracingEndpointRequire object.
@@ -312,7 +312,6 @@ class IntegrationRequirers:  # pylint: disable=too-many-instance-attributes
     databases: dict[str, "PaaSDatabaseRequires"]
     openfga: "OpenFGARequires | None" = None
     rabbitmq: "RabbitMQRequires | None" = None
-    valkey: "ValkeyClientRequirer | None" = None
     s3: "PaaSS3Requirer | None" = None
     saml: "PaaSSAMLRequirer | None" = None
     tracing: "PaaSTracingEndpointRequirer | None" = None
@@ -331,7 +330,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
         databases_relation_data: Map from interface_name to the database relation data.
         openfga: OpenFGA connection information from relation data.
         rabbitmq: RabbitMQ relation data.
-        valkey: The Valkey connection info from valkey relation data.
         s3: S3 connection information from relation data.
         saml: SAML parameters.
         smtp: SMTP parameters.
@@ -343,7 +341,6 @@ class IntegrationsState:  # pylint: disable=too-many-instance-attributes
     databases_relation_data: dict[str, "PaaSDatabaseRelationData"] = field(default_factory=dict)
     openfga: "OpenfgaProviderAppData | None" = None
     rabbitmq: "PaaSRabbitMQRelationData | None" = None
-    valkey: "ValkeyResponseModel | None" = None
     s3: "PaaSS3RelationData | None" = None
     saml: "PaaSSAMLRelationData | None" = None
     smtp: "SmtpRelationData | None" = None

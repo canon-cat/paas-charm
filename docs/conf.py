@@ -159,6 +159,11 @@ llms_txt_description = textwrap.dedent(
     """
 )
 
+# sphinx-markdown-builder (run by sphinx_llm.txt) has no visitor for these nodes.
+# "meta" may be removable once liran-funaro/sphinx-markdown-builder#70 / NVIDIA/sphinx-llm#172 land;
+# "mermaid" is unaddressed upstream and will still need suppressing.
+llms_txt_suppress_unknown_node_warnings = ["meta", "mermaid"]
+
 # The base URL for references built by sphinx-markdown-builder.
 if os.environ.get("READTHEDOCS"):
     markdown_http_base = html_baseurl
@@ -262,6 +267,7 @@ rst_epilog = """
 intersphinx_mapping = {
     "sphinxcontrib-mermaid": ("https://sphinxcontrib-mermaid-demo.readthedocs.io/en/latest", None),
     "juju": ("https://canonical.com/juju/docs/juju-cli/3.6/", None),
+<<<<<<< before updating
     "charmcraft": ("https://canonical.com/juju/docs/charmcraft/latest/", None),
     "rockcraft": ("https://documentation.ubuntu.com/rockcraft/latest/", None),
     "pebble": ("https://documentation.ubuntu.com/pebble/", None),
@@ -278,3 +284,6 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 if os.path.exists('./reuse/substitutions.yaml'):
     with open('./reuse/substitutions.yaml', 'r') as fd:
         myst_substitutions = yaml.safe_load(fd.read())
+=======
+}
+>>>>>>> after updating
